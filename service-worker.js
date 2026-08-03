@@ -1,6 +1,6 @@
-const CACHE = 'eclipse26-v24';
+const CACHE = 'eclipse26-v25';
 const CORE = [
-  './', './index.html', './manifest.webmanifest',
+  './index.html', './manifest.webmanifest',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   'https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js'
 ];
@@ -9,14 +9,28 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
-  self.clients.claim();
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request).then(response => {
-    const copy = response.clone();
-    caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
-    return response;
-  }).catch(() => caches.match('./index.html'))));
+  const isNavigation = event.request.mode === 'navigate';
+  if (isNavigation) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {});
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+  event.respondWith(
+    caches.match(event.request).then(hit => hit || fetch(event.request).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
+      return response;
+    }))
+  );
 });
