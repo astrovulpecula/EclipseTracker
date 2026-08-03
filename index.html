@@ -311,7 +311,52 @@ function startLiveMode(){
   speak('Live eclipse tracking is ready.');
   animateLive();updateCountdown();
 }
-function updateCountdown(){const now=new Date();if(liveMode){updateLiveVisual(now);}if($('#stage')?.classList.contains('simulation-active')){const schedule=todaySchedule();if(schedule){updateSimulationTimeline(simLastVirtual,schedule);updateLiveSunAltitude(actualDateForVirtual(simLastVirtual,schedule),'Altura del Sol en la simulación');}return;}updateLiveSunAltitude(now);$('#now').textContent=new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,dateStyle:'medium',timeStyle:'medium',hour12:false}).format(now);if(!events.length)return;document.querySelectorAll('.phase').forEach(el=>el.classList.remove('active','done'));let next=events.find(e=>e.date>now);events.forEach(e=>{const delta=e.date-now;const el=document.querySelector(`.phase[data-key="${e.key}"]`);if(el){const count=el.querySelector('[data-count]');if(count){count.textContent=delta>=0?'Faltan '+dur(delta):'Hace '+dur(-delta);count.classList.toggle('sim-countdown',delta>=0);count.classList.toggle('sim-elapsed',delta<0);}if(delta<0)el.classList.add('done')}const td=document.querySelector(`[data-table-count="${e.key}"]`);if(td)td.textContent=delta>=0?dur(delta):'Finalizado';});if(next){$('#nextName').textContent=`Cuenta atrás hasta ${labels[next.key][0]} · ${labels[next.key][1]}`;$('#countdown').textContent=dur(next.date-now);document.querySelector(`.phase[data-key="${next.key}"]`)?.classList.add('active')}else{$('#nextName').textContent='Eclipse finalizado';$('#countdown').textContent='00:00:00'}const first=events[0].date,last=events.at(-1).date;$('#progressBar').style.width=Math.max(0,Math.min(100,(now-first)/(last-first)*100))+'%'}
+function formatT(deltaMs){
+  const before=deltaMs>=0;
+  return `T ${before?'−':'+'} ${dur(Math.abs(deltaMs))}`;
+}
+function updateTopClock(now=new Date()){
+  const clock=$('#now');if(!clock)return;
+  try{clock.textContent=new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,dateStyle:'medium',timeStyle:'medium',hour12:false}).format(now)}
+  catch(_){clock.textContent=now.toLocaleString('es-ES',{hour12:false})}
+}
+function updateCountdown(){
+  const now=new Date();
+  // The header clock is always the real clock. It must never pause with a simulation.
+  updateTopClock(now);
+  if(liveMode){updateLiveVisual(now);}
+  if($('#stage')?.classList.contains('simulation-active')){
+    const schedule=todaySchedule();
+    if(schedule){updateSimulationTimeline(simLastVirtual,schedule);updateLiveSunAltitude(actualDateForVirtual(simLastVirtual,schedule),'Altura del Sol en la simulación');}
+    return;
+  }
+  updateLiveSunAltitude(now);
+  if(!events.length)return;
+  document.querySelectorAll('.phase').forEach(el=>el.classList.remove('active','done'));
+  let next=events.find(e=>e.date>now);
+  events.forEach(e=>{
+    const delta=e.date-now;
+    const el=document.querySelector(`.phase[data-key="${e.key}"]`);
+    if(el){
+      const count=el.querySelector('[data-count]');
+      if(count){count.textContent=formatT(delta);count.classList.toggle('sim-countdown',delta>=0);count.classList.toggle('sim-elapsed',delta<0);}
+      if(delta<0)el.classList.add('done');
+    }
+    const td=document.querySelector(`[data-table-count="${e.key}"]`);
+    if(td)td.textContent=formatT(delta);
+  });
+  if(next){
+    $('#nextName').textContent=`Cuenta atrás hasta ${labels[next.key][0]} · ${labels[next.key][1]}`;
+    $('#countdown').textContent=formatT(next.date-now);
+    document.querySelector(`.phase[data-key="${next.key}"]`)?.classList.add('active');
+  }else{
+    const last=events.at(-1);
+    $('#nextName').textContent='Tiempo desde C4 · eclipse finalizado';
+    $('#countdown').textContent=last?formatT(last.date-now):'T + 00:00:00';
+  }
+  const first=events[0].date,last=events.at(-1).date;
+  $('#progressBar').style.width=Math.max(0,Math.min(100,(now-first)/(last-first)*100))+'%';
+}
 function ensureAudio(){
   try{
     const Ctx=window.AudioContext||window.webkitAudioContext;
@@ -524,14 +569,14 @@ function updateSimulationTimeline(v,schedule){
     const count=el.querySelector('[data-count]');
     if(v<target){
       if(count){
-        count.textContent='Simulación: faltan '+dur((target-v)*1000);
+        count.textContent='T − '+dur((target-v)*1000);
         count.classList.add('sim-count','sim-countdown');
         count.classList.remove('sim-elapsed');
       }
       if(!currentSet){el.classList.add('active','sim-current');currentSet=true}
     }else{
       if(count){
-        count.textContent='Simulación: hace '+dur((v-target)*1000);
+        count.textContent='T + '+dur((v-target)*1000);
         count.classList.add('sim-count','sim-elapsed');
         count.classList.remove('sim-countdown');
       }
