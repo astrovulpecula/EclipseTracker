@@ -1,25 +1,10 @@
-# Eclipse 26 — publicación en GitHub Pages
+# Eclipse 26 — GitHub Pages / iPhone / iPad
 
-Sube todos estos archivos directamente a la raíz del repositorio:
+1. Sube todos los archivos y carpetas de este ZIP a la raíz de un repositorio de GitHub.
+2. En GitHub abre **Settings → Pages**.
+3. En **Build and deployment**, selecciona **Deploy from a branch**.
+4. Selecciona la rama `main` y la carpeta `/ (root)`; pulsa **Save**.
+5. Abre en Safari la URL publicada por GitHub Pages.
+6. Pulsa **Compartir → Añadir a pantalla de inicio** y activa **Abrir como app web**.
 
-- `index.html`
-- `manifest.webmanifest`
-- `service-worker.js`
-- `apple-touch-icon.png`
-- `icon-192.png`
-- `icon-512.png`
-
-No hace falta crear ni subir una carpeta `icons` en esta versión.
-
-Después activa GitHub Pages en:
-
-`Settings → Pages → Deploy from a branch → main → /(root)`
-
-Para instalarla en iPad o iPhone:
-
-1. Abre la URL de GitHub Pages en Safari.
-2. Pulsa Compartir.
-3. Selecciona Añadir a pantalla de inicio.
-4. Elimina antes el acceso anterior si conservaba el icono antiguo.
-
-Cuando actualices los archivos, espera a que GitHub Pages termine el despliegue y vuelve a abrir la web. Si Safari conserva la versión anterior, elimina el acceso de la pantalla de inicio, cierra Safari y añádelo de nuevo.
+Si ya existía un icono antiguo que abría Chrome, elimínalo y vuelve a añadirlo desde Safari después de publicar esta versión.

@@ -1,8 +1,10 @@
-const CACHE = 'eclipse26-v17';
+const CACHE = 'eclipse26-v21';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
-  'https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js'
+  'https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => Promise.allSettled(CORE.map(url => cache.add(url)))));
