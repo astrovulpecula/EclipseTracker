@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eclipse 26 — Cronómetro y simulador</title>
+<style>
+:root{--bg:#070a12;--panel:#101522;--panel2:#171d2d;--line:#273047;--text:#f5f7ff;--muted:#9aa6bd;--accent:#ffb02e;--blue:#5d8cff;--green:#36d399;--elapsed:#176b43;--danger:#ff667a;--shadow:0 18px 60px #0008}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% -10%,#243054 0,#0b0f1a 32%,var(--bg) 70%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}.app{max-width:1500px;margin:auto;padding:20px}.topbar{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 58% 43%,#fff 0 7%,#ffcf71 8% 28%,#ff9d20 29% 45%,#111827 47%);box-shadow:0 0 35px #ffb02e66}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}.live{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#101522cc;color:var(--muted);font-variant-numeric:tabular-nums}.grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px}.card{background:linear-gradient(180deg,#131928ee,#0f1420ee);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.sidebar{padding:18px;align-self:start;position:sticky;top:16px}.label{display:block;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 7px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}input,select{width:100%;border:1px solid var(--line);background:#090d16;color:var(--text);border-radius:11px;padding:12px;font-size:14px;outline:none}input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #5d8cff22}.btn{border:0;border-radius:11px;padding:12px 14px;font-weight:800;cursor:pointer;color:white;background:#29324a;transition:.18s}.btn:hover{transform:translateY(-1px);filter:brightness(1.1)}.btn.primary{background:linear-gradient(135deg,#557cff,#795dff)}.btn.sun{background:linear-gradient(135deg,#ff9a25,#f4511e)}.btn.ghost{background:transparent;border:1px solid var(--line)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.actions .wide{grid-column:1/-1}.notice{font-size:12px;line-height:1.45;color:var(--muted);padding:12px;border:1px solid var(--line);border-radius:12px;margin-top:14px;background:#0a0e17}.status{margin-top:14px;padding:12px;border-radius:12px;background:#0a0e17;border-left:4px solid var(--blue);font-size:13px;line-height:1.45}.main{display:grid;gap:18px}.hero{padding:20px;display:grid;grid-template-columns:minmax(320px,1.2fr) minmax(280px,.8fr);gap:20px}.stage{position:relative;min-height:430px;border-radius:16px;overflow:hidden;background:radial-gradient(circle at 50% 43%,#1c2540 0,#080b12 58%,#03050a);border:1px solid #222b41}.stage.simulation-active{border-color:#ff9f1a;box-shadow:0 0 0 3px #ff9f1a66,0 0 26px #ff9f1a55,inset 0 0 0 1px #ffd27a;animation:simulationFramePulse 1.8s ease-in-out infinite}.stage.simulation-active::after{content:"SIMULATION";position:absolute;right:16px;bottom:16px;z-index:40;padding:6px 10px;border-radius:999px;background:#ff9f1ae8;color:#1b1204;font-size:11px;font-weight:900;letter-spacing:.12em;box-shadow:0 4px 18px #0005;pointer-events:none}.stage.simulation-active.simulation-paused{animation-play-state:paused;border-color:#ffd27a}.stage.simulation-active.simulation-paused::after{content:"SIMULATION PAUSED"}@keyframes simulationFramePulse{0%,100%{box-shadow:0 0 0 3px #ff9f1a55,0 0 20px #ff9f1a3d,inset 0 0 0 1px #ffd27a}50%{box-shadow:0 0 0 4px #ffb23d88,0 0 34px #ff9f1a70,inset 0 0 0 1px #fff0b0}}.stars{position:absolute;inset:0;background-image:radial-gradient(#fff 0.7px,transparent .8px),radial-gradient(#8db5ff .7px,transparent .8px);background-size:31px 31px,47px 47px;background-position:0 0,10px 14px;opacity:.45}.sun-disc,.moon-disc{position:absolute;left:50%;top:48%;width:210px;height:210px;border-radius:50%;transform:translate(-50%,-50%)}.sun-disc{z-index:3;background:radial-gradient(circle,#fffef3 0 54%,#ffe089 70%,#ffb53a 82%,#ff8b17 100%);box-shadow:0 0 18px #fff,0 0 60px #ffc046,0 0 120px #ff9f2360;overflow:hidden}.sun-disc::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffffff55,transparent 40%),radial-gradient(circle at 60% 62%,#ffffff22,transparent 32%);mix-blend-mode:screen}.sun-disc::after{content:"";position:absolute;inset:-22px;border-radius:50%;background:radial-gradient(circle,transparent 0 58%,#fff6 61%,transparent 67%);opacity:.45;filter:blur(2px)}.stage.totality .sun-disc{box-shadow:0 0 4px #fff4,0 0 10px #fff5,0 0 22px #ffffff30}.moon-disc{z-index:6;background:radial-gradient(circle at 35% 35%,#0a1020 0,#020306 62%,#010204 100%);box-shadow:0 0 0 1px #000c,inset 0 0 22px #ffffff08;left:50%;width:216px;height:216px;transition:none;will-change:transform}.corona{position:absolute;z-index:2;left:50%;top:48%;width:470px;height:470px;border-radius:50%;transform:translate(-50%,-50%) scale(.82);opacity:0;transition:opacity .2s,transform .45s;background:radial-gradient(circle,transparent 0 20%,#fffffffa 21% 21.5%,#edf4ffcc 24%,#cfe1ff8f 32%,#9fc3ff35 44%,transparent 67%)}.corona::before,.corona::after{content:"";position:absolute;border-radius:50%;inset:-6%;background:repeating-conic-gradient(from 0deg,transparent 0 4deg,#eef7ff66 4.5deg 5.7deg,transparent 6deg 12deg,#dcebff3a 12.2deg 13deg,transparent 13.5deg 18deg);mask:radial-gradient(transparent 0 27%,#000 30%,transparent 70%);filter:blur(2.5px)}.corona::after{inset:-12%;transform:rotate(9deg) scale(1.05);opacity:.78;filter:blur(6px)}.stage.totality .corona{opacity:1;transform:translate(-50%,-50%) scale(1)}.diamond{z-index:8;position:absolute;left:50%;top:48%;width:15px;height:15px;border-radius:50%;background:#fffdf5;box-shadow:0 0 10px 5px #fff,0 0 26px 14px #fff3c4,0 0 56px 22px #ffc75c;opacity:0;transform:translate(-103px,-22px)}.diamond::after{content:"";position:absolute;left:50%;top:50%;width:110px;height:3px;background:linear-gradient(90deg,transparent,#fff7cf,#fff,transparent);transform:translate(-50%,-50%);filter:blur(1px);opacity:.9}.beads{z-index:8;position:absolute;left:50%;top:48%;width:232px;height:232px;border-radius:50%;transform:translate(-50%,-50%);opacity:0;pointer-events:none}.beads i{position:absolute;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 7px 3px #fff,0 0 15px 7px #ffd77a}.beads i:nth-child(1){left:6px;top:42%}.beads i:nth-child(2){left:14px;top:34%;width:6px;height:6px}.beads i:nth-child(3){left:28px;top:26%;width:5px;height:5px}.beads i:nth-child(4){left:46px;top:20%;width:4px;height:4px}.beads.exit i:nth-child(1){left:auto;right:6px;top:58%}.beads.exit i:nth-child(2){left:auto;right:14px;top:66%;width:6px;height:6px}.beads.exit i:nth-child(3){left:auto;right:28px;top:74%;width:5px;height:5px}.beads.exit i:nth-child(4){left:auto;right:46px;top:80%;width:4px;height:4px}.stage.baily .beads{opacity:1}.stage.diamond .diamond{opacity:1}.stage.c3 .diamond{transform:translate(103px,22px)}.prominence{z-index:4;position:absolute;left:50%;top:48%;width:230px;height:230px;border-radius:50%;transform:translate(-50%,-50%);opacity:0;background:conic-gradient(from 175deg,transparent 0 12deg,#ff6d4a 13deg 15deg,transparent 16deg 162deg,#ff8a63 163deg 165deg,transparent 166deg 255deg,#ff5f46 256deg 258deg,transparent 259deg);mask:radial-gradient(transparent 0 48%,#000 49% 52%,transparent 53%)}.stage.totality .prominence{opacity:.95}.stage-label{position:absolute;left:18px;bottom:16px;padding:10px 12px;border-radius:10px;background:#05070ccc;border:1px solid #ffffff20;font-weight:800}.sim-hud{position:absolute;right:18px;top:16px;z-index:20;display:flex;flex-direction:column;align-items:flex-end;gap:5px;pointer-events:none}.sim-time{font-variant-numeric:tabular-nums;color:#dbe5ff;background:#05070cbb;padding:8px 10px;border-radius:9px}.sim-percent{font-variant-numeric:tabular-nums;font-size:12px;font-weight:900;color:#fff4d6;background:#9a4d08dd;border:1px solid #ffc15c88;padding:5px 8px;border-radius:999px}.simcontrols{position:absolute;left:18px;right:18px;top:16px;display:flex;gap:7px;z-index:30;max-width:65%;pointer-events:auto}.simcontrols button{position:relative;z-index:31;pointer-events:auto}.sun-disc,.moon-disc,.corona,.prominence,.beads,.diamond,.stars{pointer-events:none}.simcontrols button{padding:8px 10px;font-size:12px}.summary{display:flex;flex-direction:column;gap:12px}.summary h2{font-size:22px;margin:2px 0}.bigclock{padding:18px;border:1px solid var(--line);border-radius:15px;background:#090d16}.bigclock .kicker{color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:800}.bigclock strong{display:block;font-size:34px;margin-top:7px;font-variant-numeric:tabular-nums}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{padding:13px;background:#0a0e17;border:1px solid var(--line);border-radius:12px}.metric span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase}.metric strong{display:block;margin-top:6px;font-size:17px}.metric small{display:block;margin-top:5px;color:var(--muted);font-size:10px}.metric.sun-near-max{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,#0a0e17);box-shadow:0 0 0 2px #ffb02e22}.metric.sun-near-max strong{color:var(--accent)}html[data-theme="light"] .metric.sun-near-max{background:#fff4df;border-color:#e86f00;box-shadow:0 0 0 2px #e86f0022}html[data-theme="light"] .metric.sun-near-max strong{color:#c65d00}.timeline-card{padding:18px}.timeline-head{display:flex;justify-content:space-between;align-items:center}.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:15px}.phase{padding:13px;border:1px solid var(--line);border-radius:13px;background:#0a0e17;min-height:126px;position:relative}.phase.active{border-color:var(--accent);box-shadow:0 0 0 2px #ffb02e22}.phase.done{opacity:.65}.phase .code{font-size:12px;color:var(--accent);font-weight:900}.phase h3{font-size:14px;margin:8px 0}.phase time{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}.phase .count{color:var(--muted);font-size:12px;margin-top:10px;font-variant-numeric:tabular-nums}.phase.sim-current{border-color:#ff9f1a;box-shadow:0 0 0 2px #ff9f1a33}.phase .count.sim-count{font-weight:800}.phase .count.sim-countdown{color:var(--accent)}.phase .count.sim-elapsed{color:var(--elapsed)}.progress{height:7px;border-radius:99px;background:#090d16;margin-top:14px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--accent));border-radius:inherit}.table-card{padding:18px}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:13px}.table th{color:var(--muted);font-size:11px;text-transform:uppercase}.hidden{display:none!important}
+.stage.live-active{border-color:#187a4b;box-shadow:0 0 0 3px #187a4b55,0 0 25px #187a4b45,inset 0 0 0 1px #75d7a8}
+.stage.live-active::after{content:"LIVE";position:absolute;right:16px;bottom:16px;z-index:40;padding:6px 11px;border-radius:999px;background:#176b43;color:#fff;font-size:11px;font-weight:900;letter-spacing:.14em;box-shadow:0 4px 18px #0005;pointer-events:none}
+.btn.live-ready{background:linear-gradient(135deg,#238b59,#176b43)}
+.btn.live-ready.is-live{background:linear-gradient(135deg,#b43636,#8f2424)}
+@media(max-width:1100px){
+  .grid{display:flex;flex-direction:column}
+  .main,.hero{display:contents}
+  .stage{order:1;min-height:520px}
+  .summary{order:2;padding:18px;background:linear-gradient(180deg,#131928ee,#0f1420ee);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+  .timeline-card{order:3}
+  .table-card{order:4;overflow-x:auto}
+  .sidebar{order:5;position:static}
+  .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .hero{padding:0}
+}
+@media(max-width:1050px){.timeline{grid-template-columns:1fr 1fr}.phase:last-child{grid-column:1/-1}}@media(max-width:650px){.sim-hud{top:146px;right:12px}.sim-percent{font-size:11px}.app{padding:8px}.topbar{align-items:flex-start}.brand small{display:block;max-width:190px}.grid{gap:10px}.summary,.sidebar,.timeline-card,.table-card{padding:13px}.row,.actions,.metrics,.timeline{grid-template-columns:1fr}.actions .wide,.phase:last-child{grid-column:auto}.stage{min-height:470px;border-radius:14px}.sun-disc,.moon-disc{width:165px;height:165px}.simcontrols{left:12px;right:12px;max-width:calc(100% - 24px);display:grid;grid-template-columns:1fr 1fr;gap:7px}.simcontrols button{min-height:48px;font-size:11px;padding:8px}.live{display:none}.theme-wrap{gap:6px}.theme-btn{padding:9px 10px}.summary h2{font-size:18px}.bigclock strong{font-size:28px}.table{min-width:680px}.stage-label{left:12px;right:12px;bottom:12px;font-size:13px}.stage.live-active::after,.stage.simulation-active::after{right:12px;bottom:64px}}
+@media(min-width:651px) and (max-width:1100px){.simcontrols{max-width:72%;flex-wrap:wrap}.timeline{grid-template-columns:repeat(3,1fr)}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* v3: motor visual continuo y físicamente coherente */
+.stage{--sun-opacity:1;--sky-dark:0;transition:background .8s ease}
+.sun-disc{opacity:var(--sun-opacity);transition:opacity .18s linear;z-index:3}
+.stage.totality .sun-disc{opacity:0!important;box-shadow:none!important}
+.moon-disc{z-index:7;will-change:left,top;box-shadow:0 0 0 1px #000,inset -18px -12px 35px #0008}
+.corona{z-index:4;width:520px;height:520px;background:radial-gradient(circle,transparent 0 20.2%,#fff 20.8% 21.25%,#eef5ffdd 22%,#d8e7ff9c 27%,#a9c9ff50 37%,#769cff20 49%,transparent 68%);filter:none}
+.corona::before{inset:-9%;background:repeating-conic-gradient(from 2deg,transparent 0 3.4deg,#f6f9ff8a 3.8deg 4.5deg,transparent 5deg 10deg,#d8e8ff55 10.3deg 11deg,transparent 11.4deg 17deg);mask:radial-gradient(transparent 0 26%,#000 30%,#000 55%,transparent 73%);filter:blur(2px)}
+.corona::after{inset:-16%;background:repeating-conic-gradient(from 7deg,transparent 0 8deg,#cfe0ff3d 8.4deg 9.2deg,transparent 9.8deg 19deg);mask:radial-gradient(transparent 0 31%,#000 36%,#000 59%,transparent 76%);filter:blur(7px)}
+.stage.totality{background:radial-gradient(circle at 50% 48%,#18213a 0,#080b13 46%,#02040a 82%)}
+.stage.totality .corona{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.stage:not(.totality) .corona{opacity:0}
+.prominence{z-index:5}
+.diamond,.beads{z-index:9}
+.stage.baily .beads{opacity:1}
+.stage.diamond .diamond{opacity:1}
+.stage.totality.baily .beads,.stage.totality.diamond .diamond{opacity:0}
+
+/* Tema claro de alta visibilidad para uso exterior */
+html[data-theme="light"]{color-scheme:light}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="light"] body{background:radial-gradient(circle at 70% -10%,#ffffff 0,#edf4ff 38%,#dce8f6 100%)}
+html[data-theme="light"]{--bg:#e8f0f8;--panel:#ffffff;--panel2:#f4f7fb;--line:#b8c5d4;--text:#111827;--muted:#526174;--blue:#245eea;--green:#087f5b;--danger:#c92a2a;--shadow:0 14px 38px #23344d20}
+html[data-theme="light"] .card{background:linear-gradient(180deg,#ffffff,#f6f9fc)}
+html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="light"] .notice,html[data-theme="light"] .status,html[data-theme="light"] .bigclock,html[data-theme="light"] .metric,html[data-theme="light"] .phase,html[data-theme="light"] .progress{background:#ffffff}
+html[data-theme="light"] .live{background:#ffffffdd;color:#334155}
+html[data-theme="light"] .btn.ghost{background:#ffffff;color:#172033;border-color:#9eacbd}
+html[data-theme="light"] .btn.ghost:hover{background:#edf3fb}
+html[data-theme="light"] .stage{background:radial-gradient(circle at 50% 38%,#dff4ff 0,#99d8f4 48%,#57a9d6 100%);border-color:#7eb6d2}html[data-theme="light"] .stage.simulation-active{border-color:#e86f00;box-shadow:0 0 0 4px #e86f0066,0 0 28px #e86f0055,inset 0 0 0 1px #fff2c2}html[data-theme="light"] .stage.simulation-active::after{background:#e86f00;color:#fff}
+html[data-theme="light"] .stage .stars{opacity:0}
+html[data-theme="light"] .stage.totality{background:radial-gradient(circle at 50% 48%,#17223a 0,#070b14 48%,#010307 100%)}
+html[data-theme="light"] .stage.totality .stars{opacity:.6}
+html[data-theme="light"] .stage-label,html[data-theme="light"] .sim-time,html[data-theme="light"] .sim-percent{background:#fffffff0;color:#101827;border-color:#64748b55;box-shadow:0 2px 10px #17203322}
+html[data-theme="light"] .stage.totality .stage-label,html[data-theme="light"] .stage.totality .sim-time{background:#03060ccc;color:#f8fafc;border-color:#ffffff30}
+html[data-theme="light"] .moon-disc{background:radial-gradient(circle at 35% 35%,#222b3a 0,#080b11 62%,#020304 100%)}
+.theme-wrap{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.theme-btn{min-width:132px}
+@media(max-width:650px){.sim-hud{top:102px;right:12px}.sim-percent{font-size:11px}.theme-wrap{justify-content:flex-start}.theme-btn{min-width:auto}.topbar{flex-wrap:wrap}}
+
+/* v10 — continuous, simplified eclipse rendering */
+.stage{
+  background:linear-gradient(180deg,#4d82df 0%,#5f91e5 55%,#77a6eb 100%);
+  transition:background .35s ease,filter .35s ease;
+}
+.stage .stars,.beads,.diamond,.prominence{display:none!important}
+.sun-disc{
+  width:210px;height:210px;z-index:3;
+  opacity:1!important;
+  background:radial-gradient(circle at 42% 36%,#fffef6 0 45%,#fff7d7 62%,#ffe89a 78%,#ffd05a 100%);
+  box-shadow:0 0 12px #fff,0 0 42px #fff4bf,0 0 90px #d8eaff;
+}
+.moon-disc{
+  width:216px;height:216px;z-index:6;
+  background:radial-gradient(circle at 36% 30%,#5e8edb 0%,#4274c8 42%,#294e91 72%,#152644 100%);
+  border:1px solid #bed5ff99;
+  box-shadow:inset -20px -24px 34px #0a162d99,inset 10px 10px 24px #b8d5ff24,0 0 18px #a9c8ff45;
+  transition:background .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+.stage.near-totality .moon-disc,.stage.totality .moon-disc{
+  background:radial-gradient(circle at 36% 30%,#121a2a 0%,#070b13 58%,#010204 100%);
+  border-color:#090d16;
+  box-shadow:inset -18px -22px 30px #000c,0 0 0 1px #02040a;
+}
+.corona{
+  width:455px;height:455px;z-index:2;
+  opacity:0;transform:translate(-50%,-50%) scale(.88);
+  transition:opacity .35s ease,transform .45s ease;
+  background:radial-gradient(circle,transparent 0 22%,#fff 23% 23.6%,#eef5ffcf 26%,#d5e6ff8f 34%,#bad3ff40 47%,transparent 68%);
+}
+.corona::before,.corona::after{
+  content:"";position:absolute;border-radius:50%;inset:-8%;
+  background:repeating-conic-gradient(from 4deg,transparent 0 7deg,#edf5ff78 7.3deg 8.1deg,transparent 8.6deg 16deg);
+  mask:radial-gradient(transparent 0 29%,#000 34%,#000 58%,transparent 75%);
+  filter:blur(3px)
+}
+.corona::after{inset:-15%;transform:rotate(8deg);opacity:.62;filter:blur(7px)}
+.stage.totality .corona{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.stage.near-totality:not(.totality) .corona{opacity:.28;transform:translate(-50%,-50%) scale(.94)}
+html[data-theme="light"] .stage{background:linear-gradient(180deg,#5d91e7 0%,#79a9ef 100%)}
+html[data-theme="light"] .stage.totality{background:radial-gradient(circle at 50% 48%,#23375d 0,#0c1730 52%,#030711 100%)}
+</style>
+<style>.stage.annularity .corona{opacity:0!important}.stage.annularity .sun-disc{opacity:1!important}.stage:not(.totality) .prominence{opacity:0!important}</style></head>
+<body><div class="app">
+<header class="topbar"><div class="brand"><div class="logo"></div><div><h1>Eclipse 26</h1><small>12 de agosto de 2026 · cronómetro local</small></div></div><div class="theme-wrap"><button class="btn ghost theme-btn" id="themeToggle" type="button" aria-pressed="false">☀️ Modo claro</button><div id="now" class="live">--:--:--</div></div></header>
+<div class="grid">
+<aside class="card sidebar">
+<h2 style="margin:0 0 4px">Punto de observación</h2><div style="color:var(--muted);font-size:13px">Introduce coordenadas decimales.</div>
+<label class="label" for="coordinates">Coordenadas de Google Maps</label><input id="coordinates" type="text" inputmode="decimal" autocomplete="off" placeholder="41.199461441191204, -3.590850637749287" value="41.199461441191204, -3.590850637749287"><div style="color:var(--muted);font-size:12px;margin-top:7px">Pega latitud y longitud juntas, separadas por coma. También admite enlaces de Google Maps que contengan @latitud,longitud.</div>
+<label class="label">Altitud y zona horaria</label><div class="row"><input id="elev" type="number" step="1" value="0" placeholder="Altitud (m)"><select id="tz"><option value="Europe/Madrid">España peninsular</option><option value="Atlantic/Canary">Canarias</option><option value="Atlantic/Reykjavik">Islandia</option><option value="UTC">UTC</option></select></div>
+<label class="label" for="pointName">Nombre del punto</label><input id="pointName" type="text" autocomplete="off" placeholder="Ej. Mirador de Arcones"><div class="actions"><button class="btn primary wide" id="calculate">Calcular eclipse</button><button class="btn ghost" id="locate">Usar ubicación</button><button class="btn ghost" id="save">Guardar con nombre</button></div>
+<div id="status" class="status">Listo para calcular.</div>
+<div class="notice"><b>Seguridad:</b> usa filtros solares homologados durante todas las fases parciales. Solo durante la totalidad completa puede observarse sin filtro, y debe volver a colocarse antes de C3.</div>
+<label class="label">Puntos guardados</label><select id="saved"><option value="">Seleccionar…</option></select><div class="actions"><button class="btn ghost wide" id="loadSaved">Cargar seleccionado</button></div>
+</aside>
+<main class="main">
+<section class="card hero">
+<div class="stage" id="stage"><div class="stars"></div><div class="corona"></div><div class="prominence"></div><div class="sun-disc"></div><div class="moon-disc" id="moon"></div><div class="beads" id="beads"><i></i><i></i><i></i><i></i></div><div class="diamond"></div><div class="simcontrols"><button class="btn live-ready" id="readyLive" type="button">READY · tiempo real</button><button class="btn sun" id="simulate">Full simulation from now</button><button class="btn ghost" id="simulateC2">Simulate C2</button><button class="btn ghost" id="pause">Pause</button><button class="btn ghost" id="soundToggle">Voice alerts: on</button></div><div class="sim-hud"><div class="sim-time" id="simTime">00:00:00</div><div class="sim-percent" id="simPercent">Eclipse 0.0%</div></div><div class="stage-label" id="stageLabel">Eclipse parcial</div></div>
+<div class="summary"><div><div style="color:var(--accent);font-size:12px;font-weight:900;text-transform:uppercase">Próxima fase</div><h2 id="locationTitle">Coordenadas sin calcular</h2></div><div class="bigclock"><div class="kicker" id="nextName">Cuenta atrás hasta C1</div><strong id="countdown">--:--:--</strong></div><div class="metrics"><div class="metric"><span>Tipo local</span><strong id="kind">—</strong></div><div class="metric"><span>Obscuración máxima</span><strong id="obscuration">—</strong></div><div class="metric"><span>Duración totalidad</span><strong id="totalDuration">—</strong></div><div class="metric"><span>Altura al máximo</span><strong id="altitude">—</strong></div><div class="metric" id="liveAltitudeCard"><span>Altitud actual</span><strong id="liveAltitude">—</strong><small id="liveAltitudeNote">Altura real del Sol ahora</small></div><div class="metric"><span>Azimut al máximo</span><strong id="azimuth">—</strong></div><div class="metric"><span>Duración completa</span><strong id="fullDuration">—</strong></div></div></div>
+</section>
+<section class="card timeline-card"><div class="timeline-head"><div><h2 style="margin:0">Fases del eclipse</h2><div style="color:var(--muted);font-size:13px">Hora local del punto seleccionado</div></div><button class="btn ghost" id="resetSim">Reiniciar visualización</button></div><div id="timeline" class="timeline"></div><div class="progress"><i id="progressBar"></i></div></section>
+<section class="card table-card"><h2 style="margin-top:0">Detalle de circunstancias locales</h2><table class="table"><thead><tr><th>Evento</th><th>Fecha y hora</th><th>Altura</th><th>Azimut</th><th>Cuenta atrás</th></tr></thead><tbody id="detailBody"><tr><td colspan="5" style="color:var(--muted)">Calcula un punto para mostrar los datos.</td></tr></tbody></table><div style="margin-top:12px;color:var(--muted);font-size:12px">Cálculo mediante Astronomy Engine. La trayectoria visual usa las posiciones topocéntricas reales del Sol y la Luna para las coordenadas elegidas. Los tiempos pueden diferir ligeramente de efemérides profesionales por refracción, ΔT y modelo del limbo lunar.</div></section>
+</main></div></div>
+<script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+<script>
+'use strict';
+const $=s=>document.querySelector(s);let eclipse=null,events=[],observer=null,currentLat=null,currentLon=null,simRAF=null,liveRAF=null,liveMode=false,simStart=0,simDuration=0,simMode='full',simPaused=false,pausedAt=0,soundEnabled=true,audioCtx=null,lastCue='';
+const labels={partial_begin:['C1','Inicio parcial'],total_begin:['C2','Inicio totalidad'],peak:['MAX','Máximo'],total_end:['C3','Fin totalidad'],partial_end:['C4','Fin parcial']};
+function fmtDate(d){return new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,dateStyle:'medium',timeStyle:'medium',hour12:false}).format(d)}
+function fmtClock(d){return new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)}
+function dur(ms,days=true){if(!Number.isFinite(ms))return '—';let neg=ms<0;ms=Math.abs(ms);let s=Math.floor(ms/1000),d=Math.floor(s/86400);s%=86400;let h=Math.floor(s/3600);s%=3600;let m=Math.floor(s/60);s%=60;return(neg?'-':'')+(days&&d?d+' d ':'')+[h,m,s].map(v=>String(v).padStart(2,'0')).join(':')}
+function eventDate(x){return x?.time?.date instanceof Date?x.time.date:new Date(x?.time?.date||x?.date||x)}
+function sunHorizontalAt(date){
+  if(!observer||!window.Astronomy||!(date instanceof Date)||Number.isNaN(+date))return {altitude:null,azimuth:null};
+  try{
+    const eq=Astronomy.Equator(Astronomy.Body.Sun,date,observer,true,true);
+    const h=Astronomy.Horizon(date,observer,eq.ra,eq.dec,'normal');
+    return {altitude:Number.isFinite(h.altitude)?h.altitude:null,azimuth:Number.isFinite(h.azimuth)?h.azimuth:null};
+  }catch(_){return {altitude:null,azimuth:null}}
+}
+function updateLiveSunAltitude(date,label='Altura real del Sol ahora'){
+  const card=$('#liveAltitudeCard'),value=$('#liveAltitude'),note=$('#liveAltitudeNote');
+  if(!card||!value||!note)return;
+  const horizontal=sunHorizontalAt(date);
+  value.textContent=Number.isFinite(horizontal.altitude)?horizontal.altitude.toFixed(2)+'°':'—';
+  note.textContent=label;
+  const peak=readEvent('peak');
+  const near=Number.isFinite(horizontal.altitude)&&Number.isFinite(peak?.altitude)&&Math.abs(horizontal.altitude-peak.altitude)<=2;
+  card.classList.toggle('sun-near-max',near);
+}
+function readEvent(key){
+  const x=eclipse?.[key];if(!x)return null;
+  const d=eventDate(x);if(Number.isNaN(+d))return null;
+  const horizontal=sunHorizontalAt(d);
+  return {
+    key,
+    date:d,
+    altitude:Number.isFinite(x.altitude)?x.altitude:horizontal.altitude,
+    azimuth:Number.isFinite(x.azimuth)?x.azimuth:horizontal.azimuth
+  };
+}
+function kindText(k){return({total:'Total',partial:'Parcial',annular:'Anular'})[String(k).toLowerCase()]||String(k||'—')}
+function localEclipseKind(){return String(eclipse?.kind||'').toLowerCase()}
+function hasTotality(){return localEclipseKind()==='total'&&!!eventByKey('total_begin')&&!!eventByKey('total_end')}
+function hasAnnularity(){return localEclipseKind()==='annular'&&!!eventByKey('total_begin')&&!!eventByKey('total_end')}
+function maximumObscurationPercent(){const o=Number(eclipse?.obscuration);return Number.isFinite(o)?Math.max(0,Math.min(100,o*100)):0}
+function setStatus(text,type='info'){const el=$('#status');el.textContent=text;el.style.borderLeftColor=type==='error'?'var(--danger)':type==='ok'?'var(--green)':'var(--blue)'}
+function parseCoordinates(value){
+  const raw=String(value||'').trim();
+  const at=raw.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  const nums=(at?[at[1],at[2]]:(raw.match(/-?\d+(?:[.,]\d+)?/g)||[]).slice(0,2)).map(v=>Number(String(v).replace(',','.')));
+  if(nums.length<2||!Number.isFinite(nums[0])||!Number.isFinite(nums[1]))throw new Error('Pega las coordenadas como “latitud, longitud”.');
+  const [lat,lon]=nums;
+  if(lat<-90||lat>90)throw new Error('Latitud no válida.');
+  if(lon<-180||lon>180)throw new Error('Longitud no válida.');
+  return {lat,lon};
+}
+function setCoordinateInput(lat,lon){$('#coordinates').value=`${Number(lat).toFixed(10).replace(/0+$/,'').replace(/\.$/, '')}, ${Number(lon).toFixed(10).replace(/0+$/,'').replace(/\.$/, '')}`}
+function calculate(){
+  try{
+    if(!window.Astronomy)throw new Error('No se ha podido cargar el motor astronómico. Comprueba la conexión a internet.');
+    const {lat,lon}=parseCoordinates($('#coordinates').value),elev=+$('#elev').value||0;
+    currentLat=lat;currentLon=lon;trajectoryCache=null;observer=new Astronomy.Observer(lat,lon,elev);setCoordinateInput(lat,lon);
+    eclipse=Astronomy.SearchLocalSolarEclipse(new Date('2026-08-01T00:00:00Z'),observer);
+    if(!eclipse)throw new Error('No se encontró el eclipse para este punto.');
+    events=['partial_begin','total_begin','peak','total_end','partial_end'].map(readEvent).filter(Boolean);
+    if(!events.some(e=>e.key==='peak')||Math.abs(events.find(e=>e.key==='peak').date-new Date('2026-08-12T18:00:00Z'))>3*864e5)throw new Error('El eclipse calculado no corresponde al 12 de agosto de 2026.');
+    render(lat,lon);setStatus('Cálculo completado. La trayectoria lunar se adapta a estas coordenadas.','ok');
+    localStorage.setItem('eclipse26-last',JSON.stringify({lat,lon,elev,tz:$('#tz').value,name:$('#pointName').value.trim()}));
+  }catch(err){setStatus(err.message,'error')}
+}
+function render(lat,lon){$('#locationTitle').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)}`;$('#kind').textContent=kindText(eclipse.kind);let obsc=eclipse.obscuration;$('#obscuration').textContent=Number.isFinite(obsc)?(obsc*100).toFixed(3)+' %':'—';const c2=readEvent('total_begin'),c3=readEvent('total_end'),c1=readEvent('partial_begin'),c4=readEvent('partial_end'),pk=readEvent('peak');$('#totalDuration').textContent=hasTotality()&&c2&&c3?dur(c3.date-c2.date,false):hasAnnularity()?'Sin totalidad':'Sin totalidad';$('#fullDuration').textContent=c1&&c4?dur(c4.date-c1.date,false):'—';$('#altitude').textContent=Number.isFinite(pk?.altitude)?pk.altitude.toFixed(2)+'°':'—';$('#azimuth').textContent=Number.isFinite(pk?.azimuth)?pk.azimuth.toFixed(2)+'°':'—';const shortBtn=$('#simulateC2');if(shortBtn)shortBtn.textContent=hasTotality()?'Simulate C2':hasAnnularity()?'Simulate annularity':'Simulate maximum';updateLiveSunAltitude(new Date());renderTimeline();renderTable();updateCountdown();resetSimulation()}
+function renderTimeline(){const box=$('#timeline');box.innerHTML='';events.forEach(e=>{const [code,name]=labels[e.key];const div=document.createElement('article');div.className='phase';div.dataset.key=e.key;div.innerHTML=`<div class="code">${code}</div><h3>${name}</h3><time>${fmtClock(e.date)}</time><div class="count" data-count>—</div>`;box.appendChild(div)})}
+function renderTable(){const body=$('#detailBody');body.innerHTML='';events.forEach(e=>{const [code,name]=labels[e.key],tr=document.createElement('tr');tr.innerHTML=`<td><b>${code}</b> · ${name}</td><td>${fmtDate(e.date)}</td><td>${Number.isFinite(e.altitude)?e.altitude.toFixed(2)+'°':'—'}</td><td>${Number.isFinite(e.azimuth)?e.azimuth.toFixed(2)+'°':'—'}</td><td data-table-count="${e.key}">—</td>`;body.appendChild(tr)})}
+function virtualSecondsForDate(date,schedule){
+  const c1=eventByKey('partial_begin');
+  if(!c1||!schedule||!(date instanceof Date))return schedule?.partial_begin||0;
+  return schedule.partial_begin+(date.getTime()-c1.date.getTime())/1000;
+}
+function updateLiveVisual(date=new Date()){
+  if(!liveMode||!eclipse)return;
+  const schedule=todaySchedule();if(!schedule)return;
+  const v=virtualSecondsForDate(date,schedule);
+  setVisualAtVirtualTime(v,schedule);
+  updateLiveSunAltitude(date,'Altura real del Sol ahora');
+  $('#simTime').textContent=fmtClock(date);
+  $('#simPercent').textContent=eclipsePercent(v,schedule).toFixed(1)+'% del eclipse';
+}
+function animateLive(){
+  if(!liveMode)return;
+  updateLiveVisual(new Date());
+  liveRAF=requestAnimationFrame(animateLive);
+}
+function stopLiveMode(quiet=false){
+  liveMode=false;if(liveRAF)cancelAnimationFrame(liveRAF);liveRAF=null;
+  const stage=$('#stage'),button=$('#readyLive');stage?.classList.remove('live-active');
+  if(button){button.classList.remove('is-live');button.textContent='READY · tiempo real';button.setAttribute('aria-pressed','false')}
+  if(!quiet){setStatus('Modo de seguimiento real detenido.','info');resetSimulation()}
+}
+function startLiveMode(){
+  if(liveMode){stopLiveMode();return}
+  if(!eclipse||!events.length){setStatus('Calcula primero el eclipse para activar el seguimiento real.','error');return}
+  if(simRAF)cancelAnimationFrame(simRAF);simRAF=null;simPaused=false;
+  $('#stage').classList.remove('simulation-active','simulation-paused');
+  liveMode=true;lastCue='';
+  const button=$('#readyLive');button?.classList.add('is-live');if(button){button.textContent='DETENER LIVE';button.setAttribute('aria-pressed','true')}
+  $('#stage').classList.add('live-active');
+  setStatus('Modo LIVE activo: posición, fase y cuentas atrás siguen la fecha y hora reales.','ok');
+  speak('Live eclipse tracking is ready.');
+  animateLive();updateCountdown();
+}
+function updateCountdown(){const now=new Date();if(liveMode){updateLiveVisual(now);}if($('#stage')?.classList.contains('simulation-active')){const schedule=todaySchedule();if(schedule){updateSimulationTimeline(simLastVirtual,schedule);updateLiveSunAltitude(actualDateForVirtual(simLastVirtual,schedule),'Altura del Sol en la simulación');}return;}updateLiveSunAltitude(now);$('#now').textContent=new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,dateStyle:'medium',timeStyle:'medium',hour12:false}).format(now);if(!events.length)return;document.querySelectorAll('.phase').forEach(el=>el.classList.remove('active','done'));let next=events.find(e=>e.date>now);events.forEach(e=>{const delta=e.date-now;const el=document.querySelector(`.phase[data-key="${e.key}"]`);if(el){const count=el.querySelector('[data-count]');if(count){count.textContent=delta>=0?'Faltan '+dur(delta):'Hace '+dur(-delta);count.classList.toggle('sim-countdown',delta>=0);count.classList.toggle('sim-elapsed',delta<0);}if(delta<0)el.classList.add('done')}const td=document.querySelector(`[data-table-count="${e.key}"]`);if(td)td.textContent=delta>=0?dur(delta):'Finalizado';});if(next){$('#nextName').textContent=`Cuenta atrás hasta ${labels[next.key][0]} · ${labels[next.key][1]}`;$('#countdown').textContent=dur(next.date-now);document.querySelector(`.phase[data-key="${next.key}"]`)?.classList.add('active')}else{$('#nextName').textContent='Eclipse finalizado';$('#countdown').textContent='00:00:00'}const first=events[0].date,last=events.at(-1).date;$('#progressBar').style.width=Math.max(0,Math.min(100,(now-first)/(last-first)*100))+'%'}
+function ensureAudio(){
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(Ctx&&!audioCtx)audioCtx=new Ctx();
+    if(audioCtx?.state==='suspended')audioCtx.resume().catch(()=>{});
+  }catch(_){audioCtx=null}
+}
+function pickVoice(){
+  const voices=window.speechSynthesis?.getVoices?.()||[];
+  const english=voices.filter(v=>/^en(-|_)?/i.test(v.lang||''));
+  const femalePattern=/samantha|victoria|karen|moira|tessa|serena|ava|allison|susan|zira|hazel|female|woman|fiona|kate|emma|olivia/i;
+  return english.find(v=>femalePattern.test(v.name||''))
+    ||english.find(v=>/enhanced|premium|natural/i.test(v.name||''))
+    ||english[0]||null;
+}
+function speak(text){
+  if(!soundEnabled||!('speechSynthesis' in window)||!text)return;
+  try{
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-GB';u.rate=.92;u.pitch=1.08;u.volume=.82;
+    const v=pickVoice();if(v)u.voice=v;
+    window.speechSynthesis.speak(u);
+  }catch(_){/* voice must never block controls */}
+}
+const voiceLines={
+  start:'Real-time eclipse simulation started.',
+  countdown:'Countdown to first contact.',
+  c1:'First contact. The partial eclipse begins.',
+  approachC2:'Attention. Second contact is approaching.',
+  bailyIn:'Baily’s beads.',
+  diamondIn:'Diamond ring effect.',
+  c2:'Second contact. Totality begins now.',
+  maximum:'Maximum eclipse.',
+  c3warning:'Attention. Totality is about to end.',
+  c3:'Third contact. Totality has ended.',
+  diamondOut:'Diamond ring effect. The photosphere is returning.',
+  bailyOut:'Baily’s beads.',
+  c4:'Fourth contact. The eclipse has ended.'
+};
+function sayCue(key){if(!key||key===lastCue)return;lastCue=key;speak(voiceLines[key])}
+function wallParts(date){
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:$('#tz').value,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(date);
+  const get=t=>+(parts.find(x=>x.type===t)?.value||0);
+  return {h:get('hour')%24,m:get('minute'),s:get('second')};
+}
+function wallSeconds(date){const t=wallParts(date);return t.h*3600+t.m*60+t.s}
+function todaySchedule(){
+  if(!events.length)return null;
+  const map={};events.forEach(e=>map[e.key]=wallSeconds(e.date));
+  if(!Number.isFinite(map.partial_begin)||!Number.isFinite(map.partial_end))return null;
+  return map;
+}
+function actualDateForVirtual(v,schedule){
+  const anchor=events.find(e=>e.key==='partial_begin')||events[0];
+  return new Date(anchor.date.getTime()+(v-schedule.partial_begin)*1000);
+}
+function wrappedAngle(deg){return ((deg+540)%360)-180}
+function relativeSkyPosition(date){
+  if(!observer||!window.Astronomy)return {dx:0,dy:0};
+  try{
+    const sunEq=Astronomy.Equator(Astronomy.Body.Sun,date,observer,true,true);
+    const moonEq=Astronomy.Equator(Astronomy.Body.Moon,date,observer,true,true);
+    const sun=Astronomy.Horizon(date,observer,sunEq.ra,sunEq.dec,'normal');
+    const moon=Astronomy.Horizon(date,observer,moonEq.ra,moonEq.dec,'normal');
+    return {dx:wrappedAngle(moon.azimuth-sun.azimuth)*Math.cos(sun.altitude*Math.PI/180),dy:moon.altitude-sun.altitude};
+  }catch(_){return {dx:0,dy:0}}
+}
+function eventByKey(key){return events.find(e=>e.key===key)||null}
+function skyPxForEvent(key){
+  const e=eventByKey(key);if(!e)return null;
+  const pos=relativeSkyPosition(e.date),scale=210/0.533;
+  const x=pos.dx*scale,y=-pos.dy*scale;
+  return Number.isFinite(x)&&Number.isFinite(y)?{x,y}:null;
+}
+function buildTrajectory(schedule){
+  // Use only C1, maximum and C4. This avoids discontinuities around C2/C3
+  // while preserving the true local position angle from the observer's coordinates.
+  const c1=eventByKey('partial_begin'), peak=eventByKey('peak'), c4=eventByKey('partial_end');
+  if(!c1||!peak||!c4)return null;
+  const raw=[
+    {key:'partial_begin',t:schedule.partial_begin,r:relativeSkyPosition(c1.date)},
+    {key:'peak',t:schedule.peak,r:relativeSkyPosition(peak.date)},
+    {key:'partial_end',t:schedule.partial_end,r:relativeSkyPosition(c4.date)}
+  ];
+  if(raw.some(x=>!Number.isFinite(x.r.dx)||!Number.isFinite(x.r.dy)))return null;
+  const toScreen=r=>({x:r.dx,y:-r.dy});
+  const q=raw.map(x=>({...x,p:toScreen(x.r)}));
+  // Scale the real angular geometry so C1/C4 correspond to external contact.
+  const contactPx=(210+216)/2;
+  const r1=Math.hypot(q[0].p.x,q[0].p.y)||1;
+  const r4=Math.hypot(q[2].p.x,q[2].p.y)||1;
+  const scale=contactPx/((r1+r4)/2);
+  q.forEach(x=>{x.p.x*=scale;x.p.y*=scale});
+  // Clamp only pathological library values; keep angle and impact parameter intact.
+  for(const x of q){
+    const r=Math.hypot(x.p.x,x.p.y);
+    if(r>270){x.p.x*=270/r;x.p.y*=270/r}
+  }
+  return {points:q,scale};
+}
+function lerp(a,b,t){return a+(b-a)*t}
+function smoothstep(t){return t*t*(3-2*t)}
+function trueSkyPositionAtVirtual(v,schedule,scale){
+  const date=actualDateForVirtual(v,schedule);
+  const r=relativeSkyPosition(date);
+  const dx=r.dx*scale,dy=-r.dy*scale;
+  if(!Number.isFinite(dx)||!Number.isFinite(dy))return null;
+  return {dx,dy};
+}
+function trajectoryPosition(v,schedule){
+  if(!trajectoryCache)trajectoryCache=buildTrajectory(schedule);
+  const cache=trajectoryCache;
+  if(!cache)return {dx:260,dy:0,angle:0};
+  const [a,m,b]=cache.points;
+  if(v<=a.t){
+    const real=trueSkyPositionAtVirtual(v,schedule,cache.scale);
+    const next=trueSkyPositionAtVirtual(v+1,schedule,cache.scale);
+    if(real){
+      const angle=next?Math.atan2(next.dy-real.dy,next.dx-real.dx):Math.atan2(m.p.y-a.p.y,m.p.x-a.p.x);
+      return {...real,angle};
+    }
+  }
+  if(v>=b.t){
+    const real=trueSkyPositionAtVirtual(v,schedule,cache.scale);
+    const prev=trueSkyPositionAtVirtual(v-1,schedule,cache.scale);
+    if(real){
+      const angle=prev?Math.atan2(real.dy-prev.dy,real.dx-prev.dx):Math.atan2(b.p.y-m.p.y,b.p.x-m.p.x);
+      return {...real,angle};
+    }
+  }
+  if(v<=m.t){
+    const u=(v-a.t)/(m.t-a.t||1);
+    return {dx:lerp(a.p.x,m.p.x,u),dy:lerp(a.p.y,m.p.y,u),angle:Math.atan2(m.p.y-a.p.y,m.p.x-a.p.x)};
+  }
+  const u=(v-m.t)/(b.t-m.t||1);
+  return {dx:lerp(m.p.x,b.p.x,u),dy:lerp(m.p.y,b.p.y,u),angle:Math.atan2(b.p.y-m.p.y,b.p.x-m.p.x)};
+}
+function positionMoonAtVirtual(v,schedule){
+  const moon=$('#moon'),position=trajectoryPosition(v,schedule);
+  moon.style.left='50%';moon.style.top='48%';
+  moon.style.transform=`translate(-50%,-50%) translate(${position.dx.toFixed(2)}px,${position.dy.toFixed(2)}px)`;
+  return position;
+}
+function placeContactEffects(position,exit=false){
+  const angle=position.angle, r=108;
+  const x=Math.cos(angle)*r,y=Math.sin(angle)*r;
+  const diamond=$('.diamond'),beads=$('#beads');
+  diamond.style.left=`calc(50% + ${x.toFixed(1)}px)`;diamond.style.top=`calc(48% + ${y.toFixed(1)}px)`;diamond.style.transform='translate(-50%,-50%)';
+  beads.style.transform=`translate(-50%,-50%) rotate(${(angle*180/Math.PI).toFixed(1)}deg)`;
+  beads.classList.toggle('exit',exit);
+}
+function setVisualAtVirtualTime(v,schedule){
+  const st=$('#stage');
+  const c1=schedule.partial_begin,c4=schedule.partial_end,pk=schedule.peak;
+  const c2=schedule.total_begin,c3=schedule.total_end;
+  positionMoonAtVirtual(v,schedule);
+  const pct=eclipsePercent(v,schedule);
+  const total=hasTotality();
+  const annular=hasAnnularity();
+  st.classList.remove('totality','near-totality','diamond','baily','c3','annularity');
+  $('.sun-disc').style.opacity='1';
+  // Corona and totality darkness are allowed only where the local eclipse is truly total.
+  if(total&&Number.isFinite(c2)&&Number.isFinite(c3)){
+    if(v>=c2&&v<=c3)st.classList.add('totality');
+    if(v<c2&&c2-v<=45||v>c3&&v-c3<=45)st.classList.add('near-totality');
+  }else if(annular&&Number.isFinite(c2)&&Number.isFinite(c3)&&v>=c2&&v<=c3){
+    st.classList.add('annularity');
+  }
+  // Sky darkness follows the real local obscuration. Partial eclipses never become night-like.
+  const maxPct=maximumObscurationPercent();
+  let darkness=0;
+  if(total) darkness=Math.max(0,Math.min(1,(pct-68)/32));
+  else darkness=Math.max(0,Math.min(.42,(pct-65)/55));
+  const blueTop=[77,130,223],blueBottom=[119,166,235];
+  const darkTop=[24,39,70],darkBottom=[3,8,19];
+  const mix=(a,b,t)=>Math.round(a+(b-a)*t);
+  const top=blueTop.map((x,i)=>mix(x,darkTop[i],darkness));
+  const bottom=blueBottom.map((x,i)=>mix(x,darkBottom[i],darkness));
+  st.style.background=`linear-gradient(180deg,rgb(${top.join(',')}) 0%,rgb(${bottom.join(',')}) 100%)`;
+  let label='Cuenta atrás para C1';
+  if(v<c1)label='Cuenta atrás para el comienzo del eclipse';
+  else if(v<pk){
+    if(total&&Number.isFinite(c2)&&v>=c2)label='Totalidad · corona solar';
+    else if(annular&&Number.isFinite(c2)&&v>=c2)label='Anularidad';
+    else label='Eclipse parcial';
+  }else if(Math.abs(v-pk)<2){
+    label=total?'Máximo del eclipse total':annular?'Máximo del eclipse anular':`Máximo parcial · ${maxPct.toFixed(1)}%`;
+  }else if(v<c4){
+    if(total&&Number.isFinite(c3)&&v<=c3)label='Totalidad · corona solar';
+    else if(annular&&Number.isFinite(c3)&&v<=c3)label='Anularidad';
+    else label='Eclipse parcial final';
+  }else label='C4 · eclipse finalizado';
+  $('#stageLabel').textContent=label;
+}
+function eclipsePercent(v,schedule){
+  const c1=schedule.partial_begin,pk=schedule.peak,c4=schedule.partial_end;
+  const maxPct=maximumObscurationPercent();
+  if(!Number.isFinite(c1)||!Number.isFinite(pk)||!Number.isFinite(c4)||v<=c1||v>=c4)return 0;
+  if(v<=pk)return Math.max(0,Math.min(maxPct,(v-c1)/(pk-c1)*maxPct));
+  return Math.max(0,Math.min(maxPct,(c4-v)/(c4-pk)*maxPct));
+}
+function updateSimulationTimeline(v,schedule){
+  const ordered=[['partial_begin','C1'],['total_begin','C2'],['peak','MAX'],['total_end','C3'],['partial_end','C4']];
+  document.querySelectorAll('.phase').forEach(el=>el.classList.remove('active','done','sim-current'));
+  let currentSet=false;
+  for(const [key] of ordered){
+    const target=schedule[key],el=document.querySelector(`.phase[data-key="${key}"]`);
+    if(!el||!Number.isFinite(target))continue;
+    const count=el.querySelector('[data-count]');
+    if(v<target){
+      if(count){
+        count.textContent='Simulación: faltan '+dur((target-v)*1000);
+        count.classList.add('sim-count','sim-countdown');
+        count.classList.remove('sim-elapsed');
+      }
+      if(!currentSet){el.classList.add('active','sim-current');currentSet=true}
+    }else{
+      if(count){
+        count.textContent='Simulación: hace '+dur((v-target)*1000);
+        count.classList.add('sim-count','sim-elapsed');
+        count.classList.remove('sim-countdown');
+      }
+      el.classList.add('done');
+    }
+  }
+  const first=schedule.partial_begin,last=schedule.partial_end;
+  if(Number.isFinite(first)&&Number.isFinite(last))$('#progressBar').style.width=Math.max(0,Math.min(100,(v-first)/(last-first)*100))+'%';
+}
+function clearSimulationTimeline(){
+  document.querySelectorAll('.phase [data-count]').forEach(el=>el.classList.remove('sim-count','sim-countdown','sim-elapsed'));
+  updateCountdown();
+}
+function buildCueSchedule(s){
+  const c1=s.partial_begin,c4=s.partial_end,pk=s.peak;
+  const cues=[[c1,'c1'],[pk,'maximum'],[c4,'c4']];
+  if(hasTotality()){
+    const c2=s.total_begin,c3=s.total_end;
+    cues.push([c2-35,'approachC2'],[c2,'c2'],[c3-25,'c3warning'],[c3,'c3']);
+  }
+  return cues.filter(x=>Number.isFinite(x[0])).sort((a,b)=>a[0]-b[0]);
+}
+let simClockStart=0,simClockEnd=0,simLastVirtual=0,simCues=[],simRealDuration=0;
+let trajectoryCache=null;
+function fireCrossedCues(from,to){
+  for(const [at,key] of simCues){if(at>from&&at<=to&&key!==lastCue)sayCue(key)}
+}
+function startSimulation(mode){
+  try{
+    if(liveMode)stopLiveMode(true);
+    if(simRAF)cancelAnimationFrame(simRAF);
+    simRAF=null;simPaused=false;lastCue='';
+    ensureAudio();
+    if('speechSynthesis' in window)window.speechSynthesis.cancel();
+    const schedule=todaySchedule();
+    if(!schedule){setStatus('Calculate the eclipse first so the simulation has valid contact times.','error');return}
+    simMode=mode;trajectoryCache=null;
+    $('#stage').classList.add('simulation-active');
+    $('#stage').classList.remove('simulation-paused');
+    const nowWall=wallSeconds(new Date());
+    if(mode==='c2'){
+      const focus=hasTotality()?schedule.total_begin:schedule.peak;
+      simClockStart=Math.max(schedule.partial_begin,focus-90);
+      simClockEnd=Math.min(schedule.partial_end,focus+90);
+      simRealDuration=Math.max(1000,(simClockEnd-simClockStart)*1000); // 1:1 real time
+      setStatus(hasTotality()?'C2 simulation started in real time.':'Local maximum simulation started in real time. This location has no totality.','info');
+    }else{
+      simClockStart=nowWall;
+      simClockEnd=schedule.partial_end;
+      if(simClockStart>=simClockEnd){
+        $('#stage').classList.remove('simulation-active','simulation-paused');
+        setStatus('Today’s simulated eclipse has already passed C4. Change the system time or use the C2 simulation.','error');
+        return;
+      }
+      simRealDuration=(simClockEnd-simClockStart)*1000; // exact 1:1 clock speed
+      setStatus('Full simulation running in real time from the current clock until C4.','info');
+    }
+    simCues=buildCueSchedule(schedule).filter(([at])=>at>=simClockStart&&at<=simClockEnd);
+    simLastVirtual=simClockStart;
+    simStart=performance.now();
+    $('#pause').textContent='Pause';
+    speak(mode==='full'?voiceLines.start:(hasTotality()?'Real-time second contact simulation started.':'Real-time local maximum simulation started. This location has a partial eclipse.'));
+    setVisualAtVirtualTime(simClockStart,schedule);
+    updateSimulationTimeline(simClockStart,schedule);
+    updateLiveSunAltitude(actualDateForVirtual(simClockStart,schedule),'Altura del Sol en la simulación');
+    $('#simPercent').textContent=eclipsePercent(simClockStart,schedule).toFixed(1)+'% del eclipse';
+    animateSim(performance.now());
+  }catch(err){$('#stage').classList.remove('simulation-active','simulation-paused');setStatus('The simulation could not start: '+err.message,'error')}
+}
+function animateSim(now){
+  if(simPaused)return;
+  const schedule=todaySchedule();if(!schedule)return;
+  const elapsedMs=Math.max(0,now-simStart);
+  const virtual=Math.min(simClockEnd,simClockStart+elapsedMs/1000); // one simulated second per real second
+  fireCrossedCues(simLastVirtual,virtual);simLastVirtual=virtual;
+  setVisualAtVirtualTime(virtual,schedule);
+  updateSimulationTimeline(virtual,schedule);
+  updateLiveSunAltitude(actualDateForVirtual(virtual,schedule),'Altura del Sol en la simulación');
+  $('#simPercent').textContent=eclipsePercent(virtual,schedule).toFixed(1)+'% del eclipse';
+  const hh=Math.floor(virtual/3600)%24,mm=Math.floor(virtual%3600/60),ss=Math.floor(virtual%60);
+  $('#simTime').textContent=[hh,mm,ss].map(x=>String(x).padStart(2,'0')).join(':');
+  if(virtual<simClockEnd)simRAF=requestAnimationFrame(animateSim);
+  else{simRAF=null;setVisualAtVirtualTime(simClockEnd,schedule);$('#stage').classList.remove('simulation-active','simulation-paused')}
+}
+function resetSimulation(){
+  if(liveMode){liveMode=false;if(liveRAF)cancelAnimationFrame(liveRAF);liveRAF=null;$('#stage')?.classList.remove('live-active');const rb=$('#readyLive');if(rb){rb.classList.remove('is-live');rb.textContent='READY · tiempo real';rb.setAttribute('aria-pressed','false')}}
+  cancelAnimationFrame(simRAF);simRAF=null;simPaused=false;lastCue='';$('#pause').textContent='Pause';$('#stage').classList.remove('simulation-active','simulation-paused');
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();
+  const schedule=todaySchedule();
+  if(schedule){const v=Math.min(wallSeconds(new Date()),schedule.partial_end);setVisualAtVirtualTime(v,schedule)}
+  else{const st=$('#stage');st.classList.remove('totality','diamond','baily','c3');$('#moon').style.left='50%';$('#moon').style.transform='translate(-50%,-50%) translate(260px,0)';$('.sun-disc').style.opacity='1';$('#stageLabel').textContent='Calcula una ubicación para comenzar';}
+  $('#simTime').textContent='--:--:--';$('#simPercent').textContent='Eclipse 0.0%';updateLiveSunAltitude(new Date());clearSimulationTimeline();trajectoryCache=null;
+}
+function togglePause(){
+  if(!simRAF&&!simPaused)return;
+  if(!simPaused){simPaused=true;pausedAt=performance.now();cancelAnimationFrame(simRAF);simRAF=null;$('#pause').textContent='Resume';$('#stage').classList.add('simulation-paused');if('speechSynthesis' in window)window.speechSynthesis.cancel()}
+  else{simPaused=false;simStart+=performance.now()-pausedAt;$('#pause').textContent='Pause';$('#stage').classList.remove('simulation-paused');animateSim(performance.now())}
+}
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  const button=$('#soundToggle');
+  if(button)button.textContent='Voice alerts: '+(soundEnabled?'on':'off');
+  if(soundEnabled){ensureAudio();speak('Voice alerts enabled.');setStatus('English voice alerts enabled. A female voice is preferred when available on this device.','info');}
+  else{if('speechSynthesis' in window)window.speechSynthesis.cancel();setStatus('Voice alerts disabled.','info');}
+}
+function savePoint(){
+  try{
+    const {lat,lon}=parseCoordinates($('#coordinates').value),elev=+$('#elev').value||0,name=$('#pointName').value.trim();
+    if(!name)throw new Error('Escribe un nombre para guardar el punto.');
+    const list=JSON.parse(localStorage.getItem('eclipse26-points')||'[]');
+    const existing=list.find(p=>p.name.toLowerCase()===name.toLowerCase());
+    const point={id:existing?.id||(crypto.randomUUID?.()||Date.now().toString()),name,lat,lon,elev,tz:$('#tz').value};
+    if(existing)Object.assign(existing,point);else list.push(point);
+    localStorage.setItem('eclipse26-points',JSON.stringify(list));refreshSaved();$('#saved').value=point.id;setStatus(`Punto “${name}” guardado.`, 'ok');
+  }catch(err){setStatus(err.message,'error')}
+}
+function refreshSaved(){const list=JSON.parse(localStorage.getItem('eclipse26-points')||'[]'),s=$('#saved');s.innerHTML='<option value="">Seleccionar…</option>'+list.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}
+function loadSaved(){const list=JSON.parse(localStorage.getItem('eclipse26-points')||'[]'),p=list.find(x=>x.id===$('#saved').value);if(!p)return;setCoordinateInput(p.lat,p.lon);$('#elev').value=p.elev;$('#tz').value=p.tz||'Europe/Madrid';$('#pointName').value=p.name||'';calculate()}
+function applyTheme(theme){
+  const value=theme==='light'?'light':'dark';
+  document.documentElement.dataset.theme=value;
+  const button=$('#themeToggle');
+  if(button){
+    const isLight=value==='light';
+    button.textContent=isLight?'🌙 Modo oscuro':'☀️ Modo claro';
+    button.setAttribute('aria-pressed',String(isLight));
+    button.setAttribute('aria-label',isLight?'Activar modo oscuro':'Activar modo claro');
+  }
+  try{localStorage.setItem('eclipse26-theme',value)}catch(_){}
+}
+function toggleTheme(){applyTheme(document.documentElement.dataset.theme==='light'?'dark':'light')}
+function loadTheme(){
+  let saved='';try{saved=localStorage.getItem('eclipse26-theme')||''}catch(_){}
+  applyTheme(saved==='light'?'light':'dark');
+}
+function initApp(){
+  loadTheme();
+  const on=(id,fn)=>{const el=$(id);if(el)el.addEventListener('click',fn)};
+  on('#themeToggle',toggleTheme);on('#calculate',calculate);$('#coordinates')?.addEventListener('keydown',e=>{if(e.key==='Enter')calculate()});on('#readyLive',startLiveMode);on('#simulate',()=>startSimulation('full'));on('#simulateC2',()=>startSimulation('c2'));
+  on('#pause',togglePause);on('#soundToggle',toggleSound);on('#resetSim',resetSimulation);on('#save',savePoint);on('#loadSaved',loadSaved);
+  const tz=$('#tz');if(tz)tz.addEventListener('change',()=>{if(eclipse)render(currentLat,currentLon)});
+  on('#locate',()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{setCoordinateInput(p.coords.latitude,p.coords.longitude);$('#elev').value=Math.round(p.coords.altitude||0);calculate()},e=>setStatus('No se pudo obtener la ubicación: '+e.message,'error'),{enableHighAccuracy:true}):setStatus('Geolocalización no disponible.','error'));
+  setInterval(updateCountdown,1000);refreshSaved();if('speechSynthesis' in window){window.speechSynthesis.getVoices();window.speechSynthesis.addEventListener?.('voiceschanged',()=>window.speechSynthesis.getVoices());}
+  const last=JSON.parse(localStorage.getItem('eclipse26-last')||'null');if(last){setCoordinateInput(last.lat,last.lon);$('#elev').value=last.elev;$('#tz').value=last.tz||'Europe/Madrid';$('#pointName').value=last.name||''}
+  resetSimulation();setTimeout(calculate,350);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initApp);else initApp();
+</script></body></html>
