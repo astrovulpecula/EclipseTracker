@@ -1,7 +1,7 @@
-const CACHE = 'eclipse26-v25';
+const CACHE = 'eclipse26-v31';
 const CORE = [
   './index.html', './manifest.webmanifest',
-  './apple-touch-icon.png', './icon-192.png', './icon-512.png',
+  './apple-touch-icon.png', './icon-192.png', './icon-512.png', './astro-vulpecula-logo.png',
   'https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js'
 ];
 self.addEventListener('install', event => {
