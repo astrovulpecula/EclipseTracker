@@ -244,7 +244,7 @@ html[data-theme="light"] #totalDuration.totality-remaining{color:#c65d00}
 </style>
 </head>
 <body><div class="app">
-<header class="topbar"><div class="brand"><div class="logo"></div><div><h1>Eclipse 26</h1><small>12 de agosto de 2026 · cronómetro local · v32</small></div></div><div class="theme-wrap"><button class="btn ghost theme-btn" id="themeToggle" type="button" aria-pressed="false">☀️ Modo claro</button><div id="now" class="live">--:--:--</div></div></header>
+<header class="topbar"><div class="brand"><div class="logo"></div><div><h1>Eclipse 26</h1><small>12 de agosto de 2026 · cronómetro local · v33</small></div></div><div class="theme-wrap"><button class="btn ghost theme-btn" id="themeToggle" type="button" aria-pressed="false">☀️ Modo claro</button><div id="now" class="live">--:--:--</div></div></header>
 <div class="grid">
 <aside class="card sidebar">
 <h2 style="margin:0 0 4px">Punto de observación</h2><div style="color:var(--muted);font-size:13px">Introduce unas coordenadas o usa la ubicación actual. La aplicación no guarda ubicaciones.</div>
@@ -315,7 +315,9 @@ html[data-theme="light"] #totalDuration.totality-remaining{color:#c65d00}
 <script>
 'use strict';
 const $=s=>document.querySelector(s);let eclipse=null,events=[],observer=null,currentLat=null,currentLon=null,simRAF=null,liveRAF=null,liveMode=false,simStart=0,simPaused=false,pausedAt=0,soundEnabled=true,audioCtx=null,wakeLock=null,liveLastAlertTime=null;
-const activeUtterances=new Set();let speechPrimed=false,preferredVoice=null;
+const activeUtterances=new Set();let speechPrimed=false,preferredVoice=null,voiceBuffer=null,voiceArrayBufferPromise=null,locating=false;
+const VOICE_SPRITE={"live_ready":{"start":0.0,"duration":2.026439909297052,"text":"Live eclipse tracking is ready."},"start":{"start":2.246439909297052,"duration":2.6388208616780044,"text":"Real-time eclipse simulation started."},"sim_c2":{"start":5.105260770975057,"duration":3.2341496598639456,"text":"Real-time second contact simulation started."},"sim_partial":{"start":8.559410430839002,"duration":5.507891156462585,"text":"Real-time local maximum simulation started. This location has a partial eclipse."},"voice_enabled":{"start":14.287301587301588,"duration":1.6531519274376418,"text":"Voice alerts enabled."},"test":{"start":16.160453514739228,"duration":3.7988208616780046,"text":"Attention alert. Voice notification test successful."},"c1_1800":{"start":20.179274376417233,"duration":3.974421768707483,"text":"T minus thirty minutes. Thirty minutes to first contact."},"c1_600":{"start":24.37369614512472,"duration":3.732607709750567,"text":"T minus ten minutes. Ten minutes to first contact."},"c1_300":{"start":28.326303854875285,"duration":3.8380498866213153,"text":"T minus five minutes. Five minutes to first contact."},"c1_60":{"start":32.3843537414966,"duration":3.4951473922902494,"text":"T minus one minute. One minute to first contact."},"c1_30":{"start":36.099501133786845,"duration":4.258185941043084,"text":"T minus thirty seconds. Thirty seconds to first contact."},"c1_10":{"start":40.57768707482993,"duration":4.057006802721088,"text":"T minus ten seconds. Ten seconds to first contact."},"c2_600":{"start":44.85469387755102,"duration":3.4207256235827663,"text":"T minus ten minutes. Ten minutes to totality."},"c2_300":{"start":48.49541950113379,"duration":3.5309750566893423,"text":"T minus five minutes. Five minutes to totality."},"c2_60":{"start":52.24639455782313,"duration":3.187981859410431,"text":"T minus one minute. One minute to totality."},"c2_30":{"start":55.65437641723356,"duration":3.954421768707483,"text":"T minus thirty seconds. Thirty seconds to totality."},"progress_25":{"start":59.82879818594105,"duration":2.685170068027211,"text":"Twenty-five percent of the Sun is covered."},"progress_50":{"start":62.73396825396826,"duration":2.289433106575964,"text":"Fifty percent of the Sun is covered."},"progress_75":{"start":65.24340136054421,"duration":2.719365079365079,"text":"Seventy-five percent of the Sun is covered."},"partial_begin":{"start":68.1827664399093,"duration":3.2879818594104306,"text":"First contact. The partial eclipse begins."},"total_begin":{"start":71.69074829931972,"duration":3.2137414965986393,"text":"Second contact. Totality begins now."},"peak":{"start":75.12448979591836,"duration":1.411156462585034,"text":"Maximum eclipse."},"total_end":{"start":76.7556462585034,"duration":2.886349206349206,"text":"Third contact. Totality has ended."},"partial_end":{"start":79.86199546485261,"duration":2.8444444444444446,"text":"Fourth contact. The eclipse has ended."},"number_1":{"start":82.92643990929706,"duration":0.683219954648526,"text":"One"},"number_2":{"start":83.82965986394558,"duration":0.6705668934240363,"text":"Two"},"number_3":{"start":84.72022675736962,"duration":0.6657142857142857,"text":"Three"},"number_4":{"start":85.6059410430839,"duration":0.7120634920634921,"text":"Four"},"number_5":{"start":86.5380045351474,"duration":0.7814965986394558,"text":"Five"},"number_6":{"start":87.53950113378684,"duration":0.7511111111111111,"text":"Six"},"number_7":{"start":88.51061224489796,"duration":0.8011791383219955,"text":"Seven"},"number_8":{"start":89.53179138321995,"duration":0.61859410430839,"text":"Eight"},"number_9":{"start":90.37038548752834,"duration":0.7579138321995464,"text":"Nine"},"number_10":{"start":91.34829931972789,"duration":0.687936507936508,"text":"Ten"}};
+const VOICE_TEXT_TO_KEY=Object.fromEntries(Object.entries(VOICE_SPRITE).map(([key,item])=>[item.text,key]));
 const labels={partial_begin:['C1','Inicio parcial'],total_begin:['C2','Inicio totalidad'],peak:['MAX','Máximo'],total_end:['C3','Fin totalidad'],partial_end:['C4','Fin parcial']};
 function fmtDate(d){return new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,dateStyle:'medium',timeStyle:'medium',hour12:false}).format(d)}
 function fmtClock(d){return new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)}
@@ -534,10 +536,38 @@ function primeSpeechFromGesture(){
     return true;
   }catch(_){return false}
 }
+function preloadVoiceSprite(){
+  if(!voiceArrayBufferPromise){
+    voiceArrayBufferPromise=fetch('./voice-alerts.wav',{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('voice sprite');return r.arrayBuffer()}).catch(()=>null);
+  }
+  return voiceArrayBufferPromise;
+}
+async function ensureVoiceBuffer(){
+  if(voiceBuffer)return voiceBuffer;
+  const ctx=ensureAudio();if(!ctx)return null;
+  const bytes=await preloadVoiceSprite();if(!bytes)return null;
+  try{voiceBuffer=await ctx.decodeAudioData(bytes.slice(0));return voiceBuffer}catch(_){return null}
+}
 async function primeAudioAndSpeech(){
   primeSpeechFromGesture();
   await unlockAudio();
+  await ensureVoiceBuffer();
   try{window.speechSynthesis?.resume?.()}catch(_){}
+}
+function playVoiceKey(key){
+  return new Promise(async resolve=>{
+    if(!soundEnabled){resolve();return}
+    const item=VOICE_SPRITE[key],ctx=ensureAudio(),buffer=await ensureVoiceBuffer();
+    if(!item||!ctx||!buffer||ctx.state!=='running'){resolve(false);return}
+    try{
+      const source=ctx.createBufferSource(),gain=ctx.createGain();
+      source.buffer=buffer;gain.gain.value=1;source.connect(gain);gain.connect(ctx.destination);
+      let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);resolve(true)};
+      source.onended=finish;
+      const timer=setTimeout(finish,(item.duration+.35)*1000);
+      source.start(0,item.start,item.duration+.03);
+    }catch(_){resolve(false)}
+  })
 }
 function attentionChime(){
   const ctx=ensureAudio();
@@ -584,29 +614,27 @@ function pickVoice(){
     ||english[0]||null;
 }
 function speakPromise(text,{rate=.96,countdown=false}={}){
-  return new Promise(resolve=>{
-    if(!soundEnabled||!('speechSynthesis' in window)||!text){resolve();return}
+  return new Promise(async resolve=>{
+    if(!soundEnabled||!text){resolve();return}
+    const spriteKey=countdown?VOICE_TEXT_TO_KEY[String(text).replace(/^./,c=>c.toUpperCase())]:VOICE_TEXT_TO_KEY[text];
+    if(spriteKey){
+      const played=await playVoiceKey(spriteKey);
+      if(played){resolve();return}
+    }
+    if(!('speechSynthesis' in window)){resolve();return}
     try{
-      const synth=window.speechSynthesis;
-      synth.resume?.();
+      const synth=window.speechSynthesis;synth.resume?.();
       const u=new SpeechSynthesisUtterance(text);
-      u.lang='en-GB';u.rate=countdown?1.12:rate;u.pitch=1.04;u.volume=1;
-      const v=preferredVoice||refreshPreferredVoice();
-      if(v)u.voice=v;
-      activeUtterances.add(u);
-      let done=false;
-      const finish=()=>{if(done)return;done=true;clearTimeout(timer);activeUtterances.delete(u);resolve()};
+      u.lang='en-GB';u.rate=countdown?1.06:rate;u.pitch=1.04;u.volume=1;
+      const v=preferredVoice||refreshPreferredVoice();if(v)u.voice=v;
+      activeUtterances.add(u);let done=false,keepAlive;
+      const finish=()=>{if(done)return;done=true;clearInterval(keepAlive);clearTimeout(timer);activeUtterances.delete(u);resolve()};
       u.onend=finish;u.onerror=finish;
-      // iPadOS sometimes pauses the synthesizer between queued utterances.
-      const keepAlive=setInterval(()=>{try{synth.resume?.()}catch(_){}},250);
-      const timer=setTimeout(()=>{clearInterval(keepAlive);finish()},countdown?1800:Math.max(3500,text.length*145));
-      const originalFinish=finish;
-      u.onend=()=>{clearInterval(keepAlive);originalFinish()};
-      u.onerror=()=>{clearInterval(keepAlive);originalFinish()};
-      synth.speak(u);
-      setTimeout(()=>{try{synth.resume?.()}catch(_){}},60);
+      keepAlive=setInterval(()=>{try{synth.resume?.()}catch(_){}},250);
+      const timer=setTimeout(finish,countdown?2200:Math.max(4500,text.length*170));
+      synth.speak(u);setTimeout(()=>{try{synth.resume?.()}catch(_){}},50);
     }catch(_){resolve()}
-  });
+  })
 }
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let announcementQueue=Promise.resolve();
@@ -1047,7 +1075,42 @@ function syncMobileSimulationControls(){
   }
 }
 
+function getPosition(options){
+  return new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,options));
+}
+async function locateUser(){
+  if(locating)return;
+  const button=$('#locate');
+  if(!navigator.geolocation){setStatus('Geolocalización no disponible en este dispositivo.','error');return}
+  locating=true;
+  const previous=button?.textContent||'Usar mi ubicación';
+  if(button){button.disabled=true;button.textContent='Localizando…'}
+  setStatus('Solicitando la ubicación del dispositivo… Mantén abierta esta pantalla y acepta el permiso de localización.','info');
+  let position=null,lastError=null;
+  try{
+    position=await getPosition({enableHighAccuracy:true,timeout:15000,maximumAge:30000});
+  }catch(error){lastError=error}
+  if(!position){
+    setStatus('Buscando una ubicación aproximada…','info');
+    try{position=await getPosition({enableHighAccuracy:false,timeout:12000,maximumAge:300000})}catch(error){lastError=error}
+  }
+  try{
+    if(position){
+      const {latitude,longitude,altitude,accuracy}=position.coords;
+      setCoordinateInput(latitude,longitude);
+      $('#elev').value=Number.isFinite(altitude)?Math.round(altitude):0;
+      setStatus(`Ubicación obtenida${Number.isFinite(accuracy)?` con una precisión aproximada de ${Math.round(accuracy)} m`:''}. Calculando el eclipse…`,'success');
+      await calculate();
+    }else{
+      const messages={1:'Permiso de ubicación denegado. Actívalo en Ajustes > Privacidad y seguridad > Localización para Safari o Eclipse 26.',2:'No se ha podido determinar la ubicación. Comprueba que la localización esté activada.',3:'La ubicación ha tardado demasiado. Prueba al aire libre o con Wi‑Fi y GPS activos.'};
+      setStatus(messages[lastError?.code]||('No se pudo obtener la ubicación: '+(lastError?.message||'error desconocido')),'error');
+    }
+  }finally{
+    locating=false;if(button){button.disabled=false;button.textContent=previous}
+  }
+}
 function initApp(){
+  preloadVoiceSprite();
   loadTheme();
   syncMobileSimulationControls();
   window.addEventListener('resize',syncMobileSimulationControls,{passive:true});
@@ -1059,7 +1122,7 @@ function initApp(){
   on('#testAlerts',async()=>{soundEnabled=true;const b=$('#soundToggle');if(b)b.textContent='Voice alerts: on';clearAnnouncementQueue();await primeAudioAndSpeech();announce('Attention alert. Voice notification test successful.');});
   loadAlertSettings();document.querySelectorAll('[data-alert]').forEach(el=>el.addEventListener('change',saveAlertSettings));
   const tz=$('#tz');if(tz)tz.addEventListener('change',()=>{if(eclipse)render(currentLat,currentLon)});
-  on('#locate',()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{setCoordinateInput(p.coords.latitude,p.coords.longitude);$('#elev').value=Math.round(p.coords.altitude||0);calculate()},e=>setStatus('No se pudo obtener la ubicación: '+e.message,'error'),{enableHighAccuracy:true}):setStatus('Geolocalización no disponible.','error'));
+  on('#locate',locateUser);
   setInterval(updateCountdown,1000);if('speechSynthesis' in window){window.speechSynthesis.getVoices();refreshPreferredVoice();window.speechSynthesis.addEventListener?.('voiceschanged',refreshPreferredVoice);}
   try{localStorage.removeItem('eclipse26-last');localStorage.removeItem('eclipse26-points')}catch(_){}
   if($('#coordinates')){$('#coordinates').value='';$('#coordinates').defaultValue='';}
