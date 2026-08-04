@@ -235,7 +235,7 @@ html[data-theme="light"] .simcontrols.mobile-external{background:linear-gradient
 html[data-theme="light"] .alert-settings,html[data-theme="light"] .alert-settings-body,html[data-theme="light"] .alert-option,html[data-theme="light"] .wake-status{background:#fff}
 @media(max-width:650px){.alert-grid{grid-template-columns:1fr}.alert-settings{margin-bottom:8px}}
 
-.footer{margin-top:22px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}.footer-left{display:flex;align-items:center;gap:14px;min-width:260px}.footer-logo{width:44px;height:44px;object-fit:contain;border-radius:50%;flex:0 0 auto;filter:drop-shadow(0 4px 12px #00000040)}.footer-meta{display:flex;flex-direction:column;gap:4px}.footer-title{font-weight:800}.footer-title a{color:inherit;text-decoration:none}.footer-title a:hover{text-decoration:underline}.footer-instagram a{color:var(--accent);font-weight:700;text-decoration:none}.footer-instagram a:hover{text-decoration:underline}.footer-support{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:14px}.footer-support strong{color:var(--text)}.bmc-wrap{display:flex;align-items:center;min-height:40px}.bmc-wrap iframe{max-width:100%}@media (max-width:1100px){.footer{padding:16px 18px}.footer-left,.footer-support{width:100%}}@media (max-width:650px){.footer{padding:14px 16px}.footer-left{align-items:flex-start}.footer-logo{width:38px;height:38px}.footer-title{font-size:14px}.footer-instagram,.footer-support{font-size:13px}}
+.footer{margin-top:22px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:nowrap}.footer-left{display:flex;align-items:center;gap:11px;min-width:0;flex:1 1 auto}.footer-logo{width:40px;height:40px;object-fit:contain;border-radius:50%;flex:0 0 auto;filter:drop-shadow(0 4px 12px #00000040)}.footer-meta{display:flex;flex-direction:column;gap:3px;min-width:0}.footer-title{font-weight:800;font-size:14px;line-height:1.25}.footer-title a{color:inherit;text-decoration:none}.footer-title a:hover{text-decoration:underline}.footer-instagram{font-size:13px}.footer-instagram a{color:var(--accent);font-weight:700;text-decoration:none}.footer-instagram a:hover{text-decoration:underline}.footer-support{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex:0 0 auto;color:var(--muted);font-size:13px;white-space:nowrap}.footer-support strong{color:var(--text)}.bmc-wrap{display:flex;align-items:center;min-height:36px;transform:scale(.88);transform-origin:right center}.bmc-wrap iframe{max-width:100%}@media (min-width:651px) and (max-width:1100px){.footer{padding:14px 16px;gap:10px}.footer-logo{width:34px;height:34px}.footer-title{font-size:12px}.footer-instagram,.footer-support{font-size:11px}.bmc-wrap{transform:scale(.76)}}@media (max-width:650px){.footer{padding:15px 16px;flex-direction:column;align-items:center;gap:12px;text-align:center}.footer-left{width:100%;justify-content:center;align-items:center}.footer-logo{width:38px;height:38px}.footer-title{font-size:13px}.footer-instagram,.footer-support{font-size:12px}.footer-support{width:100%;justify-content:center;white-space:normal;flex-wrap:wrap}.bmc-wrap{transform:scale(.78);transform-origin:center center}}
 
 
 #totalDuration.totality-remaining{color:var(--accent);font-variant-numeric:tabular-nums}
@@ -244,7 +244,7 @@ html[data-theme="light"] #totalDuration.totality-remaining{color:#c65d00}
 </style>
 </head>
 <body><div class="app">
-<header class="topbar"><div class="brand"><div class="logo"></div><div><h1>Eclipse 26</h1><small>12 de agosto de 2026 · cronómetro local · v31</small></div></div><div class="theme-wrap"><button class="btn ghost theme-btn" id="themeToggle" type="button" aria-pressed="false">☀️ Modo claro</button><div id="now" class="live">--:--:--</div></div></header>
+<header class="topbar"><div class="brand"><div class="logo"></div><div><h1>Eclipse 26</h1><small>12 de agosto de 2026 · cronómetro local · v32</small></div></div><div class="theme-wrap"><button class="btn ghost theme-btn" id="themeToggle" type="button" aria-pressed="false">☀️ Modo claro</button><div id="now" class="live">--:--:--</div></div></header>
 <div class="grid">
 <aside class="card sidebar">
 <h2 style="margin:0 0 4px">Punto de observación</h2><div style="color:var(--muted);font-size:13px">Introduce unas coordenadas o usa la ubicación actual. La aplicación no guarda ubicaciones.</div>
@@ -315,6 +315,7 @@ html[data-theme="light"] #totalDuration.totality-remaining{color:#c65d00}
 <script>
 'use strict';
 const $=s=>document.querySelector(s);let eclipse=null,events=[],observer=null,currentLat=null,currentLon=null,simRAF=null,liveRAF=null,liveMode=false,simStart=0,simPaused=false,pausedAt=0,soundEnabled=true,audioCtx=null,wakeLock=null,liveLastAlertTime=null;
+const activeUtterances=new Set();let speechPrimed=false,preferredVoice=null;
 const labels={partial_begin:['C1','Inicio parcial'],total_begin:['C2','Inicio totalidad'],peak:['MAX','Máximo'],total_end:['C3','Fin totalidad'],partial_end:['C4','Fin parcial']};
 function fmtDate(d){return new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,dateStyle:'medium',timeStyle:'medium',hour12:false}).format(d)}
 function fmtClock(d){return new Intl.DateTimeFormat('es-ES',{timeZone:$('#tz').value,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d)}
@@ -510,14 +511,33 @@ async function unlockAudio(){
     return ctx.state==='running';
   }catch(_){return false}
 }
-async function primeAudioAndSpeech(){
-  await unlockAudio();
+function refreshPreferredVoice(){
+  preferredVoice=pickVoice();
+  return preferredVoice;
+}
+function primeSpeechFromGesture(){
+  if(!('speechSynthesis' in window))return false;
   try{
-    if('speechSynthesis' in window){
-      window.speechSynthesis.resume?.();
-      window.speechSynthesis.getVoices?.();
+    const synth=window.speechSynthesis;
+    synth.resume?.();
+    synth.getVoices?.();
+    refreshPreferredVoice();
+    if(!speechPrimed){
+      const u=new SpeechSynthesisUtterance(' ');
+      u.lang='en-GB';u.volume=.01;u.rate=1;u.pitch=1;
+      activeUtterances.add(u);
+      const release=()=>activeUtterances.delete(u);
+      u.onend=release;u.onerror=release;
+      synth.speak(u);
+      speechPrimed=true;
     }
-  }catch(_){}
+    return true;
+  }catch(_){return false}
+}
+async function primeAudioAndSpeech(){
+  primeSpeechFromGesture();
+  await unlockAudio();
+  try{window.speechSynthesis?.resume?.()}catch(_){}
 }
 function attentionChime(){
   const ctx=ensureAudio();
@@ -561,21 +581,30 @@ function pickVoice(){
   const femalePattern=/samantha|victoria|karen|moira|tessa|serena|ava|allison|susan|zira|hazel|female|woman|fiona|kate|emma|olivia/i;
   return english.find(v=>femalePattern.test(v.name||''))
     ||english.find(v=>/enhanced|premium|natural/i.test(v.name||''))
-    ||english[0]||voices[0]||null;
+    ||english[0]||null;
 }
 function speakPromise(text,{rate=.96,countdown=false}={}){
   return new Promise(resolve=>{
     if(!soundEnabled||!('speechSynthesis' in window)||!text){resolve();return}
     try{
-      window.speechSynthesis.resume?.();
+      const synth=window.speechSynthesis;
+      synth.resume?.();
       const u=new SpeechSynthesisUtterance(text);
-      u.lang='en-GB';u.rate=countdown?1.18:rate;u.pitch=1.04;u.volume=1;
-      const v=pickVoice();if(v)u.voice=v;
+      u.lang='en-GB';u.rate=countdown?1.12:rate;u.pitch=1.04;u.volume=1;
+      const v=preferredVoice||refreshPreferredVoice();
+      if(v)u.voice=v;
+      activeUtterances.add(u);
       let done=false;
-      const finish=()=>{if(done)return;done=true;clearTimeout(timer);resolve()};
+      const finish=()=>{if(done)return;done=true;clearTimeout(timer);activeUtterances.delete(u);resolve()};
       u.onend=finish;u.onerror=finish;
-      const timer=setTimeout(finish,countdown?1050:Math.max(1800,text.length*105));
-      window.speechSynthesis.speak(u);
+      // iPadOS sometimes pauses the synthesizer between queued utterances.
+      const keepAlive=setInterval(()=>{try{synth.resume?.()}catch(_){}},250);
+      const timer=setTimeout(()=>{clearInterval(keepAlive);finish()},countdown?1800:Math.max(3500,text.length*145));
+      const originalFinish=finish;
+      u.onend=()=>{clearInterval(keepAlive);originalFinish()};
+      u.onerror=()=>{clearInterval(keepAlive);originalFinish()};
+      synth.speak(u);
+      setTimeout(()=>{try{synth.resume?.()}catch(_){}},60);
     }catch(_){resolve()}
   });
 }
@@ -584,6 +613,7 @@ let announcementQueue=Promise.resolve();
 function clearAnnouncementQueue(){
   announcementQueue=Promise.resolve();
   try{window.speechSynthesis?.cancel()}catch(_){}
+  activeUtterances.clear();
 }
 function announce(text){
   if(!soundEnabled||!text)return Promise.resolve();
@@ -1023,14 +1053,14 @@ function initApp(){
   window.addEventListener('resize',syncMobileSimulationControls,{passive:true});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(liveMode||simRAF||simPaused))requestWakeLock();});
   const on=(id,fn)=>{const el=$(id);if(el)el.addEventListener('click',fn)};
-  ['#readyLive','#simulate','#simulateC2','#soundToggle','#testAlerts'].forEach(sel=>$(sel)?.addEventListener('pointerdown',()=>{primeAudioAndSpeech();},{passive:true}));
+  ['#readyLive','#simulate','#simulateC2','#soundToggle','#testAlerts'].forEach(sel=>$(sel)?.addEventListener('pointerdown',()=>{primeSpeechFromGesture();unlockAudio();},{passive:true}));
   on('#themeToggle',toggleTheme);on('#calculate',calculate);$('#coordinates')?.addEventListener('keydown',e=>{if(e.key==='Enter')calculate()});on('#readyLive',startLiveMode);on('#simulate',()=>startSimulation('full'));on('#simulateC2',()=>startSimulation('c2'));
   on('#pause',togglePause);on('#soundToggle',toggleSound);on('#resetSim',resetSimulation);
   on('#testAlerts',async()=>{soundEnabled=true;const b=$('#soundToggle');if(b)b.textContent='Voice alerts: on';clearAnnouncementQueue();await primeAudioAndSpeech();announce('Attention alert. Voice notification test successful.');});
   loadAlertSettings();document.querySelectorAll('[data-alert]').forEach(el=>el.addEventListener('change',saveAlertSettings));
   const tz=$('#tz');if(tz)tz.addEventListener('change',()=>{if(eclipse)render(currentLat,currentLon)});
   on('#locate',()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{setCoordinateInput(p.coords.latitude,p.coords.longitude);$('#elev').value=Math.round(p.coords.altitude||0);calculate()},e=>setStatus('No se pudo obtener la ubicación: '+e.message,'error'),{enableHighAccuracy:true}):setStatus('Geolocalización no disponible.','error'));
-  setInterval(updateCountdown,1000);if('speechSynthesis' in window){window.speechSynthesis.getVoices();window.speechSynthesis.addEventListener?.('voiceschanged',()=>window.speechSynthesis.getVoices());}
+  setInterval(updateCountdown,1000);if('speechSynthesis' in window){window.speechSynthesis.getVoices();refreshPreferredVoice();window.speechSynthesis.addEventListener?.('voiceschanged',refreshPreferredVoice);}
   try{localStorage.removeItem('eclipse26-last');localStorage.removeItem('eclipse26-points')}catch(_){}
   if($('#coordinates')){$('#coordinates').value='';$('#coordinates').defaultValue='';}
   if($('#elev'))$('#elev').value='';
