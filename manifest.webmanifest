@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Eclipse 26",
-  "short_name": "Eclipse 26",
+  "name": "Eclipse Tracker 26",
+  "short_name": "Eclipse Tracker 26",
   "description": "Cronómetro local y simulador del eclipse solar del 12 de agosto de 2026.",
   "start_url": "./index.html",
   "scope": "./",
