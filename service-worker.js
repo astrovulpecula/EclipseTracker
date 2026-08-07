@@ -1,4 +1,4 @@
-const CACHE = 'eclipse26-v41';
+const CACHE = 'eclipse26-v45';
 const CORE = [
   './index.html', './manifest.webmanifest',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
